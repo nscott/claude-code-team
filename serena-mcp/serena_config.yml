@@ -1,0 +1,25 @@
+# https://github.com/oraios/serena/blob/main/src/serena/resources/serena_config.template.yml
+language_backend: LSP
+# Disable the GUI log window since it's not supported in Docker
+gui_log_window: False
+# Enable the web dashboard
+web_dashboard: True
+# Listen on all interfaces for the web dashboard to be accessible from outside the container
+web_dashboard_listen_address: 0.0.0.0
+# Disable opening the web dashboard on launch (not possible within the container)
+web_dashboard_open_on_launch: False
+log_level: 20 # (10 = debug, 20 = info, 30 = warning, 40 = error)
+trace_lsp_communication: False
+ls_specific_settings: {}
+tool_timeout: 240
+excluded_tools: []
+included_optional_tools: []
+default_max_tool_answer_chars: 150000
+token_count_estimator: CHAR_COUNT
+projects:
+  - /workspaces/projects/docket-iis-core
+  - /workspaces/projects/docket-iis-inventory
+  - /workspaces/projects/docket-iis-peri-hep-b
+  - /workspaces/projects/nestjs-common
+  - /workspaces/projects/docket-infrastructure-iis-core
+  - /workspaces/projects/docket-infrastructure-modules

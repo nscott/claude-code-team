@@ -1,0 +1,28 @@
+# We need to create our own custom Serena container to support Ruby and Terraform
+FROM ghcr.io/oraios/serena:latest
+
+ENV TZ="UTC"
+ENV LANG=C.UTF-8
+
+# Update the packages first
+RUN apt-get -y clean
+RUN apt-get update && apt-get install -y --no-install-recommends lsof net-tools curl wget ca-certificates sudo jq vim grep less git poppler-utils qpdf gnupg ruby ruby-dev lsb-release xdg-utils
+RUN apt-get dist-upgrade -y
+
+# Install HashiCorp's key for Terraform install
+RUN wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+RUN apt-get update
+RUN apt-get install -y terraform
+
+RUN bash -c "set -o pipefail && curl -fsSL https://deb.nodesource.com/setup_22.x | bash -"
+RUN apt-get install -y nodejs
+RUN apt-get upgrade -y
+
+COPY serena-mcp/ /workspaces/serena/config
+
+# Copy and set up the startup script
+COPY serena-mcp/serena-start.sh /workspaces/serena/serena-start.sh
+RUN chmod +x /workspaces/serena/serena-start.sh
+
+CMD ["/workspaces/serena/serena-start.sh"]

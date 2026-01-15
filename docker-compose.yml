@@ -1,0 +1,70 @@
+services:
+  claude-wrapper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: claude-wrapper
+    volumes:
+      - ..:/opt/programmer
+      - claude-wrapper-home:/home/coder
+    environment:
+      - TZ=UTC
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ["claude-code-swarm/scripts/entry-point.sh"]
+    env_file:
+      - .env
+    networks:
+      - agent
+  serena-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile-serena
+    container_name: serena-mcp
+    environment:
+      - SERENA_DOCKER=1
+      - SERENA_HOME=/workspaces/serena/config
+      - SERENA_AUTODISCOVER=0
+    volumes:
+      - ..:/workspaces/projects
+    ports:
+      - "24282:24282" # web dashboard
+      - "9121:9121"
+    networks:
+      - agent
+    restart: unless-stopped
+  chat:
+    image: matrixdotorg/synapse:latest
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./chat-data:/data
+    networks:
+      - agent
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "/data/synapse-start.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:8008/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+  chat-web:
+    image: vectorim/element-web:latest
+    ports:
+      - "8009:80"
+    volumes:
+      - ./element-config.json:/app/config.json
+    networks:
+      - agent
+networks:
+  agent:
+    ipam:
+      config:
+        # Specify the subnet range for IP address allocation
+        - subnet: 10.0.3.0/24
+volumes:
+  claude-wrapper-home:
+    # this ensures the volume is preserved between container reboots with all the settings/info required.
+    # Use `docker cp` to copy file off of the volume

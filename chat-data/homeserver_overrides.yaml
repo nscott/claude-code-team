@@ -1,0 +1,75 @@
+# This has overrides for homeserver.yaml after it's created.
+# This ensures federation is off and puts the config files in the right locations.
+pid_file: /data/homeserver.pid
+send_federation: false
+federation_sender_instances: []
+# Block federation traffic at IP level
+ip_range_blacklist:
+  - "0.0.0.0/0"
+  - "::/0"
+ip_range_whitelist:
+  - 10.0.0.0/8
+  - 192.168.0.0/16
+  - 127.0.0.1/32
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ["0.0.0.0"]
+    resources:
+      - names: [client]
+        compress: false
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+log_config: "/data/claude.local.log.config"
+media_store_path: "/data/media_store"
+trusted_key_servers:
+  - server_name: "matrix.org"
+federation_rr_transactions_per_room_per_second: 0
+web_client_location: http://localhost:8009
+# Get rid of all of the reasonable rate limits
+rc_message:
+  per_second: 20
+  burst_count: 50.0
+rc_registration:
+  per_second: 5
+  burst_count: 30.0
+rc_registration_token_validity:
+  per_second: 5
+  burst_count: 30.0
+rc_login:
+  address:
+    per_second: 5
+    burst_count: 30.0
+  account:
+    per_second: 3
+    burst_count: 4.0
+  failed_attempts:
+    per_second: 1
+    burst_count: 2.0
+rc_joins:
+  local:
+    per_second: 2
+    burst_count: 15.0
+rc_joins_per_room:
+  per_second: 10.0
+  burst_count: 20.0
+rc_invites:
+  per_room:
+    per_second: 5
+    burst_count: 30.0
+  per_user:
+    per_second: 5
+    burst_count: 30.0
+  per_issuer:
+    per_second: 5
+    burst_count: 30.0
+rc_room_creation:
+  per_second: 3
+  burst_count: 10.0
+rc_user_directory:
+  per_second: 1
+  burst_count: 200.0

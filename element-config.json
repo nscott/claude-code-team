@@ -1,0 +1,28 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "http://localhost:8008",
+      "server_name": "localhost"
+    }
+  },
+  "disable_guests": true,
+  "brand": "Element",
+  "integrations_ui_url": "",
+  "integrations_rest_url": "",
+  "integrations_widgets_urls": [],
+  "bug_report_endpoint_url": "",
+  "default_country_code": "US",
+  "show_labs_settings": true,
+  "features": {},
+  "default_federate": false,
+  "default_theme": "light",
+  "room_directory": {
+    "servers": ["localhost"]
+  },
+  "enable_presence_by_hs_url": {
+    "http://localhost:8008": false
+  },
+  "setting_defaults": {
+    "breadcrumbs": true
+  }
+}
