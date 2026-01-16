@@ -33,7 +33,7 @@ RUN chown coder:coder $WORKING_DIRECTORY
 WORKDIR $WORKING_DIRECTORY
 ENV APP_PATH=$WORKING_DIRECTORY
 
-RUN echo 'export PATH="$HOME/.local/bin:$PATH:/opt/programmer/scripts:/opt/programmer/claude-code-swarm/scripts"' >> /root/.bashrc
+RUN echo 'export PATH="$HOME/.local/bin:$PATH:/opt/programmer/scripts:/opt/programmer/claude-code-team/scripts"' >> /root/.bashrc
 RUN npm install -g @fission-ai/openspec@latest
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh # uv is used for the Serena MCP
 # Make the password 'docket' to use sudo
@@ -44,7 +44,7 @@ USER coder
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Set PATH for the container environment (not just shell sessions)
-ENV PATH="/home/coder/.local/bin:/opt/programmer/scripts:/opt/programmer/claude-code-swarm/scripts:${PATH}"
+ENV PATH="/home/coder/.local/bin:/opt/programmer/scripts:/opt/programmer/claude-code-team/scripts:${PATH}"
 RUN echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/coder/.bashrc
 
 CMD ["bash", "scripts/entry-point.sh"]

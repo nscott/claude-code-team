@@ -155,7 +155,7 @@ If you can't connect to the Matrix server:
 If login fails:
 
 1. Verify your username/password environment variables
-2. Check available users in the startup script: `claude-code-swarm/chat-data/synapse-start.sh`
+2. Check available users in the startup script: `claude-code-team/chat-data/synapse-start.sh`
 3. Test login with curl:
    ```bash
    curl -X POST http://chat:8008/_matrix/client/r0/login \

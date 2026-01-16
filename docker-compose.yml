@@ -12,7 +12,7 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ["claude-code-swarm/scripts/entry-point.sh"]
+    command: ["claude-code-team/scripts/entry-point.sh"]
     env_file:
       - .env
     networks:
