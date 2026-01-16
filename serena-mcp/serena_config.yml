@@ -17,9 +17,3 @@ included_optional_tools: []
 default_max_tool_answer_chars: 150000
 token_count_estimator: CHAR_COUNT
 projects:
-  - /workspaces/projects/docket-iis-core
-  - /workspaces/projects/docket-iis-inventory
-  - /workspaces/projects/docket-iis-peri-hep-b
-  - /workspaces/projects/nestjs-common
-  - /workspaces/projects/docket-infrastructure-iis-core
-  - /workspaces/projects/docket-infrastructure-modules
