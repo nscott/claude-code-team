@@ -1,4 +1,4 @@
-# claude-code-swarm
+# claude-code-team
 
 This is a basic setup to get multiple agents talking together to work on a project..
 
