@@ -7,15 +7,14 @@
       "Bash(cat:*)",
       "Bash(jq:*)",
       "Bash(grep:*)",
+      "Bash(python3:scripts/matrix_collab.py*)",
       "mcp__acp__Write",
       "mcp__acp__Edit"
     ],
     "deny": [],
     "ask": []
   },
-  "includedFiles": [
-    // Include project files
-  ],
+  "includedFiles": [],
   "agents": {
     "spec-writer": {
       "description": "Analyze documents and create comprehensive OpenSpec proposals with compliance, security, and quality attributes",

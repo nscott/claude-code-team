@@ -11,8 +11,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 
 class MatrixClient:
@@ -23,9 +23,9 @@ class MatrixClient:
         server: str = "http://localhost:8008",
         username: str = None,
         password: str = None,
-        room_alias: str = "#development_collab:claude.local"
+        room_alias: str = "#development_collab:claude.local",
     ):
-        self.server = server.rstrip('/')
+        self.server = server.rstrip("/")
         self.username = username
         self.password = password
         self.room_alias = room_alias
@@ -37,7 +37,9 @@ class MatrixClient:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.sync_token_file = self.cache_dir / f"sync_token_{username}"
 
-    def _request(self, method: str, path: str, data: dict = None, token: str = None) -> dict:
+    def _request(
+        self, method: str, path: str, data: dict = None, token: str = None
+    ) -> dict:
         """Make an HTTP request to the Matrix server."""
         url = f"{self.server}{path}"
         headers = {"Content-Type": "application/json"}
@@ -45,14 +47,14 @@ class MatrixClient:
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
-        body = json.dumps(data).encode('utf-8') if data else None
+        body = json.dumps(data).encode("utf-8") if data else None
 
         try:
             req = Request(url, data=body, headers=headers, method=method)
             with urlopen(req) as response:
-                return json.loads(response.read().decode('utf-8'))
+                return json.loads(response.read().decode("utf-8"))
         except HTTPError as e:
-            error_body = e.read().decode('utf-8')
+            error_body = e.read().decode("utf-8")
             try:
                 error_data = json.loads(error_body)
                 raise Exception(f"HTTP {e.code}: {error_data.get('error', error_body)}")
@@ -72,8 +74,8 @@ class MatrixClient:
             {
                 "type": "m.login.password",
                 "user": self.username,
-                "password": self.password
-            }
+                "password": self.password,
+            },
         )
 
         self._token = response.get("access_token")
@@ -90,12 +92,10 @@ class MatrixClient:
         token = self.login()
 
         # URL encode the room alias
-        encoded_alias = self.room_alias.replace('#', '%23').replace(':', '%3A')
+        encoded_alias = self.room_alias.replace("#", "%23").replace(":", "%3A")
 
         response = self._request(
-            "GET",
-            f"/_matrix/client/r0/directory/room/{encoded_alias}",
-            token=token
+            "GET", f"/_matrix/client/r0/directory/room/{encoded_alias}", token=token
         )
 
         self._room_id = response.get("room_id")
@@ -104,7 +104,7 @@ class MatrixClient:
 
         return self._room_id
 
-    def read_messages(self, limit: int = 20) -> list[dict]:
+    def read_messages(self, limit: int = 10) -> list[dict]:
         """Read recent messages from the room."""
         token = self.login()
         room_id = self.get_room_id()
@@ -112,18 +112,22 @@ class MatrixClient:
         response = self._request(
             "GET",
             f"/_matrix/client/r0/rooms/{room_id}/messages?dir=b&limit={limit}",
-            token=token
+            token=token,
         )
 
         messages = []
         for event in reversed(response.get("chunk", [])):
             if event.get("type") == "m.room.message":
-                messages.append({
-                    "sender": event.get("sender", "Unknown"),
-                    "body": event.get("content", {}).get("body", ""),
-                    "timestamp": event.get("origin_server_ts", 0),
-                    "time": datetime.fromtimestamp(event.get("origin_server_ts", 0) / 1000)
-                })
+                messages.append(
+                    {
+                        "sender": event.get("sender", "Unknown"),
+                        "body": event.get("content", {}).get("body", ""),
+                        "timestamp": event.get("origin_server_ts", 0),
+                        "time": datetime.fromtimestamp(
+                            event.get("origin_server_ts", 0) / 1000
+                        ),
+                    }
+                )
 
         return messages
 
@@ -141,8 +145,8 @@ class MatrixClient:
         # Perform sync
         response = self._request(
             "GET",
-            f"/_matrix/client/r0/sync?timeout=0&filter={{\"room\":{{\"timeline\":{{\"limit\":50}}}}}}{since_param}",
-            token=token
+            f'/_matrix/client/r0/sync?timeout=0&filter={{"room":{{"timeline":{{"limit":10}}}}}}{since_param}',
+            token=token,
         )
 
         # Save new sync token
@@ -161,12 +165,16 @@ class MatrixClient:
         messages = []
         for event in events:
             if event.get("type") == "m.room.message":
-                messages.append({
-                    "sender": event.get("sender", "Unknown"),
-                    "body": event.get("content", {}).get("body", ""),
-                    "timestamp": event.get("origin_server_ts", 0),
-                    "time": datetime.fromtimestamp(event.get("origin_server_ts", 0) / 1000)
-                })
+                messages.append(
+                    {
+                        "sender": event.get("sender", "Unknown"),
+                        "body": event.get("content", {}).get("body", ""),
+                        "timestamp": event.get("origin_server_ts", 0),
+                        "time": datetime.fromtimestamp(
+                            event.get("origin_server_ts", 0) / 1000
+                        ),
+                    }
+                )
 
         return messages
 
@@ -177,19 +185,42 @@ class MatrixClient:
 
         # Generate transaction ID
         import random
+
         txn_id = f"m{int(datetime.now().timestamp())}{random.randint(1000, 9999)}"
 
         response = self._request(
             "PUT",
             f"/_matrix/client/r0/rooms/{room_id}/send/m.room.message/{txn_id}",
-            {
-                "msgtype": "m.text",
-                "body": message
-            },
-            token=token
+            {"msgtype": "m.text", "body": message},
+            token=token,
         )
 
         return "event_id" in response
+
+    def poll_messages(self) -> list[dict]:
+        """Poll for new messages. Waits for first message, then continues for 5 more seconds."""
+        import time
+
+        all_messages = []
+        first_message_time = None
+
+        while True:
+            messages = self.sync_messages()
+
+            if messages:
+                all_messages.extend(messages)
+
+                # Record when first message arrived
+                if first_message_time is None:
+                    first_message_time = time.time()
+
+            # If we haven't received a first message yet, or we're in the 5-second window
+            if first_message_time is None or time.time() - first_message_time < 5:
+                time.sleep(1)
+            else:
+                break
+
+        return all_messages
 
 
 def format_message(msg: dict) -> str:
@@ -207,6 +238,7 @@ Examples:
   %(prog)s read                              # Read last 20 messages
   %(prog)s read --limit 50                   # Read last 50 messages
   %(prog)s sync                              # Check for new messages since last sync
+  %(prog)s poll                              # Wait for new messages, then poll for 5 more seconds
   %(prog)s post "✅ Completed inventory API" # Post an update
 
 Environment Variables (Required):
@@ -216,7 +248,7 @@ Environment Variables (Required):
 Environment Variables (Optional):
   MATRIX_SERVER       Matrix server URL (default: http://chat:8008)
   MATRIX_ROOM_ALIAS   Room alias (default: #development_collab:claude.local)
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
@@ -224,14 +256,16 @@ Environment Variables (Optional):
     # Read command
     read_parser = subparsers.add_parser("read", help="Read recent messages")
     read_parser.add_argument(
-        "--limit",
-        type=int,
-        default=20,
-        help="Number of messages to read (default: 20)"
+        "--limit", type=int, default=20, help="Number of messages to read (default: 20)"
     )
 
     # Sync command
     subparsers.add_parser("sync", help="Read only new messages since last sync")
+
+    # Poll command
+    subparsers.add_parser(
+        "poll", help="Wait for new messages, then continue polling for 5 seconds"
+    )
 
     # Post command
     post_parser = subparsers.add_parser("post", help="Post a message")
@@ -248,15 +282,20 @@ Environment Variables (Optional):
     password = os.getenv("MATRIX_PASS")
 
     if not username or not password:
-        print("Error: MATRIX_USER and MATRIX_PASS environment variables must be set", file=sys.stderr)
-        print("Example: export MATRIX_USER=lysander MATRIX_PASS=lysander", file=sys.stderr)
+        print(
+            "Error: MATRIX_USER and MATRIX_PASS environment variables must be set",
+            file=sys.stderr,
+        )
+        print(
+            "Example: export MATRIX_USER=lysander MATRIX_PASS=lysander", file=sys.stderr
+        )
         return 1
 
     client = MatrixClient(
         server=os.getenv("MATRIX_SERVER", "http://chat:8008"),
         username=username,
         password=password,
-        room_alias=os.getenv("MATRIX_ROOM_ALIAS", "#development_collab:claude.local")
+        room_alias=os.getenv("MATRIX_ROOM_ALIAS", "#development_collab:claude.local"),
     )
 
     try:
@@ -274,6 +313,18 @@ Environment Variables (Optional):
                 print("No new messages")
             else:
                 print(f"--- {len(messages)} new message(s) ---")
+                for msg in messages:
+                    print(format_message(msg))
+
+        elif args.command == "poll":
+            print(
+                "Polling for messages... (waiting for first message, then 5 more seconds)"
+            )
+            messages = client.poll_messages()
+            if not messages:
+                print("No messages received during polling")
+            else:
+                print(f"--- {len(messages)} message(s) received ---")
                 for msg in messages:
                     print(format_message(msg))
 
